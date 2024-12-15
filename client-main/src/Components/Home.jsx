@@ -3,16 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClubs, addClub, editClub, deleteClub } from "../api/Clubs";
 import { getPositions } from "../api/Position";
 import { getCountries } from "../api/Country";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
-} from "../Components/ui/table";
 import { Button } from "../Components/ui/button";
 import { Input } from "../Components/ui/input";
-import { Edit, Trash2, Users } from "lucide-react";
 import Loader from "./Loader/Loader";
 import EditPlayerModal from "./EditPlayerModal";
 import PlayersTable from "./PlayersTable";
@@ -206,7 +198,6 @@ const handleUpdatePlayer = async (updatedPlayerData) => {
   if (isLoading) return <Loader />;
   if (error) return <div>Error fetching data</div>;
 
-  // Rest of the component remains exactly the same as before...
   return (
     <div className="ml-5">
       <div className="flex justify-center items-center gap-10 mt-5">

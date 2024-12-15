@@ -175,6 +175,8 @@ const AddMatch = () => {
   const [selectedAwayCountry, setSelectedAwayCountry] = useState(null);
   const [homeNationalTeams, setHomeNationalTeams] = useState([]);
   const [awayNationalTeams, setAwayNationalTeams] = useState([]);
+  const [homeTeamRating, setHomeTeamRating] = useState(0);
+  const [awayTeamRating, setAwayTeamRating] = useState(0);
   const [playerCounts, setPlayerCounts] = useState({
     home: 0,
     away: 0,
@@ -184,6 +186,10 @@ const AddMatch = () => {
     type: "ClubTeam",
     date: "",
     venue: "",
+    rating: {
+      homeTeamRating: 0,
+      awayTeamRating: 0,
+    },
     homeTeam: {
       team: "",
       score: "",
@@ -247,13 +253,17 @@ const AddMatch = () => {
       if (playerIndex === -1 && isStarter) {
         updatedPlayers = [
           ...currentPlayers,
-          { player: player, starter: true, _id : player._id },
+          { player: player, starter: true, _id: player._id },
         ];
       } else if (!isStarter) {
-        updatedPlayers = currentPlayers.filter((p) => p.player._id !== player._id);
+        updatedPlayers = currentPlayers.filter(
+          (p) => p.player._id !== player._id
+        );
       } else {
         updatedPlayers = currentPlayers.map((p) =>
-          p.player._id === player._id ? { ...p, starter: true, _id : player._id } : p
+          p.player._id === player._id
+            ? { ...p, starter: true, _id: player._id }
+            : p
         );
       }
 
@@ -375,6 +385,9 @@ const AddMatch = () => {
         awayActualPoints,
         awayExpectedPoints
       );
+
+      setHomeTeamRating(homeRatingChange);
+      setAwayTeamRating(awayRatingChange);
 
       toast({
         title: "Predicted Rating Changes",
@@ -591,6 +604,10 @@ const AddMatch = () => {
 
       await addMatchMutation.mutateAsync({
         ...matchData,
+        rating: {
+          homeTeamRating: homeTeamRating,
+          awayTeamRating: awayTeamRating,
+        },
       });
     } catch (error) {
       toast({

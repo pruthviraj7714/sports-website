@@ -29,6 +29,8 @@ const EditMatchPage = () => {
   const [selectedAwayCountry, setSelectedAwayCountry] = useState(null);
   const [homeNationalTeams, setHomeNationalTeams] = useState([]);
   const [awayNationalTeams, setAwayNationalTeams] = useState([]);
+  const [homeTeamRating, setHomeTeamRating] = useState(0);
+  const [awayTeamRating, setAwayTeamRating] = useState(0);
   const [playerCounts, setPlayerCounts] = useState({
     home: 0,
     away: 0,
@@ -38,6 +40,10 @@ const EditMatchPage = () => {
     type: "ClubTeam",
     date: "",
     venue: "",
+    rating: {
+      homeTeamRating: 0,
+      awayTeamRating: 0,
+    },
     homeTeam: {
       team: "",
       score: "",
@@ -282,6 +288,9 @@ const EditMatchPage = () => {
         awayExpectedPoints
       );
 
+      setHomeTeamRating(homeRatingChange);
+      setAwayTeamRating(awayRatingChange);
+
       toast({
         title: "Predicted Rating Changes",
         description: (
@@ -500,10 +509,12 @@ const EditMatchPage = () => {
         return;
       }
 
-      console.log(matchData);
-
       await updateMatchMutation.mutateAsync({
         ...matchData,
+        rating: {
+          homeTeamRating: homeTeamRating,
+          awayTeamRating: awayTeamRating,
+        },
       });
     } catch (error) {
       toast({
