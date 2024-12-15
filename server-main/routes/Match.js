@@ -207,6 +207,10 @@ router.put("/edit-match/:matchId", async (req, res) => {
     const updatedMatchData = {
       ...req.body,
       date: matchDate,
+      rating: {
+        homeTeamRating: req.body.rating.homeTeamRating,
+        awayTeamRating: req.body.rating.awayTeamRating,
+      },
       "homeTeam.ratingChange": calculateRatingChange(
         getMatchPoints(req.body.homeTeam.score, req.body.awayTeam.score),
         calculateExpectedPoints(req.body.odds)
@@ -220,6 +224,85 @@ router.put("/edit-match/:matchId", async (req, res) => {
         })
       ),
     };
+
+    const getDeselectedPlayers = (isHome) => {
+      let deselectedPlayers = [];
+      let newPlayerIds;
+  
+      if (isHome) {
+          newPlayerIds = new Set(req.body.homeTeam.players.map((p) => p._id));
+          deselectedPlayers = existingMatch.homeTeam.players.filter(
+              (p) => !newPlayerIds.has(p._id)
+          );
+      } else {
+          newPlayerIds = new Set(req.body.awayTeam.players.map((p) => p._id));
+          deselectedPlayers = existingMatch.awayTeam.players.filter(
+              (p) => !newPlayerIds.has(p._id)
+          );
+      }
+  
+      return deselectedPlayers;
+  };
+  
+
+    const removeDeselectedPlayerRatings = async (players, matchId) => {
+      return Promise.all(
+        players.map(async (playerId) => {
+          return Player.findByIdAndUpdate(
+            playerId,
+            {
+              $pull: {
+                ratingHistory: { matchId: matchId },
+              },
+            },
+            {
+              new: true,
+              runValidators: true,
+            }
+          );
+        })
+      );
+    };
+
+    const updatePlayerRatings = async (players, ratingChange) => {
+      return Promise.all(
+        players.map(async ({ player: playerId }) => {
+          const ratingHistoryEntry = {
+            date: matchDate,
+            newRating: ratingChange,
+            type: "match",
+            matchId: matchId,
+          };
+
+          return Player.findByIdAndUpdate(
+            playerId,
+            {
+              $push: { ratingHistory: ratingHistoryEntry },
+            },
+            {
+              new: true,
+              runValidators: true,
+            }
+          );
+        })
+      );
+    };
+
+    const homeTeamDeselectedPlayers = getDeselectedPlayers(true);
+    const awayTeamDeselectedPlayers = getDeselectedPlayers(false);  
+
+    await Promise.all([
+      removeDeselectedPlayerRatings(homeTeamDeselectedPlayers, matchId),
+      removeDeselectedPlayerRatings(awayTeamDeselectedPlayers, matchId),
+      updatePlayerRatings(
+        req.body.homeTeam.players.filter((p) => p.starter),
+        req.body.rating.homeTeamRating
+      ),
+      updatePlayerRatings(
+        req.body.awayTeam.players.filter((p) => p.starter),
+        req.body.rating.awayTeamRating
+      ),
+    ]);
 
     // 7. Update Match in Database
     const updatedMatch = await Match.findByIdAndUpdate(
@@ -388,6 +471,10 @@ router.post("/matches", async (req, res) => {
     const matchData = {
       type: req.body.type,
       date: matchDate,
+      rating: {
+        homeTeamRating: req.body.rating.homeTeamRating,
+        awayTeamRating: req.body.rating.awayTeamRating,
+      },
       venue: req.body.venue.trim(),
       homeTeam: {
         team: req.body.homeTeam.team,
