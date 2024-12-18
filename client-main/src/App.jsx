@@ -7,6 +7,7 @@ import Matches from './Components/Matches'; // New import
 import PlayersPage from './Components/PlayersPage';
 import AddMatch from './Components/AddMatch';
 import EditMatchPage from './Components/EditMatchPage';
+import PredictMatchPage from './Components/PredictMatchPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path='/clubs/:clubId/players' element={<PlayersPage/>} /> 
           <Route path='/matches/add' element={<AddMatch/>} />
           <Route path='/match/edit/:matchId' element={<EditMatchPage />} />
+          <Route path='/predict-match' element={<PredictMatchPage />} />
         </Routes>
       </div>
     </Router>

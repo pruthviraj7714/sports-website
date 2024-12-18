@@ -15,6 +15,9 @@ const Header = () => {
           <Link to="/matches" className="mr-4 text-white text-sm sm:text-md cursor-pointer">
             Matches
           </Link>
+          <Link to="/predict-match" className="mr-4 text-white text-sm sm:text-md cursor-pointer">
+            Predict
+          </Link>
         </div>
       </header>
     </div>
