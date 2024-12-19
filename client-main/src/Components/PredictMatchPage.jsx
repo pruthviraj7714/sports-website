@@ -21,6 +21,7 @@ const PredictMatchPage = () => {
   const [awayNationalTeams, setAwayNationalTeams] = useState([]);
   const [homeTeamRating, setHomeTeamRating] = useState(0);
   const [awayTeamRating, setAwayTeamRating] = useState(0);
+
   const [playerCounts, setPlayerCounts] = useState({
     home: 0,
     away: 0,
@@ -214,10 +215,100 @@ const PredictMatchPage = () => {
     toast,
   ]);
 
+  const getMatchesByTeam = async ({ teamId }) => {
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_REACT_APP_API_URL
+        }/api/match/get-all-matches?teamId=${teamId}`
+      );
+      const data = await response.json();
+      return data.matches;
+    } catch (error) {
+      toast({
+        title: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  async function findMaxTeamPlayersMatches(matchData, teamId) {
+  try {
+    // Selected team players
+    const teamPlayers =
+      matchData.awayTeam.team === teamId
+        ? matchData.awayTeam.players.map((p) => p._id)
+        : matchData.homeTeam.players.map((p) => p._id);
+
+    // Fetch matches for the given team
+    const matches = await getMatchesByTeam({ teamId });
+
+    console.log('Fetched Matches:', matches);
+
+    const matchPlayerCounts = matches.map((match) => {
+      const playersInMatch =
+        match.homeTeam.team === teamId
+          ? match.homeTeam.players.map((p) => p._id)
+          : match.awayTeam.players.map((p) => p._id);
+
+      const playerCount = playersInMatch.filter((playerId) =>
+        teamPlayers.includes(playerId)
+      ).length;
+
+      return { match, playerCount };
+    });
+
+    const maxPlayerCount = Math.max(
+      0,
+      ...matchPlayerCounts.map((entry) => entry.playerCount) 
+    );
+
+    // Get matches with the maximum player count
+    const maxMatches = matchPlayerCounts
+      .filter((entry) => entry.playerCount === maxPlayerCount)
+      .map((entry) => entry.match);
+
+    return { maxMatches, maxPlayerCount };
+  } catch (error) {
+    console.error('Error finding max team player matches:', error);
+    throw error;
+  }
+}
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsPredicted(true);
-    console.log(matchData);
+    
+    const homeTeamMatches = await findMaxTeamPlayersMatches(
+      matchData,
+      matchData.homeTeam.team
+    );
+    const awayTeamMatches = await findMaxTeamPlayersMatches(
+      matchData,
+      matchData.awayTeam.team
+    );
+    setHomeTeamRating(
+      homeTeamMatches.maxMatches.reduce(
+        (acc, match) =>
+          acc +
+          (match.awayTeam.team === matchData.homeTeam.team
+            ? match.rating.awayTeamRating
+            : match.rating.homeTeamRating),
+        0
+      )
+    );
+    
+    setAwayTeamRating(
+      awayTeamMatches.maxMatches.reduce(
+        (acc, match) =>
+          acc +
+          (match.awayTeam.team === matchData.awayTeam.team
+            ? match.rating.awayTeamRating
+            : match.rating.homeTeamRating),
+        0
+      )
+    );
   };
 
   return (
@@ -418,11 +509,11 @@ const PredictMatchPage = () => {
             </div>
             <div className="flex items-center gap-3 my-2">
               <Label>Home Team Rating:</Label>
-              <Input value={0} disabled className="font-bold text-black" />
+              <Input value={homeTeamRating.toFixed(2)} disabled className="font-bold text-black" />
             </div>
             <div className="flex items-center gap-3 my-2">
               <Label>Away Team Rating:</Label>
-              <Input value={0} disabled className="font-bold text-black" />
+              <Input value={awayTeamRating.toFixed(2)} disabled className="font-bold text-black" />
             </div>
           </CardContent>
         </Card>

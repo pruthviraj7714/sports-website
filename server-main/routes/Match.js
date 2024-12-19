@@ -228,22 +228,21 @@ router.put("/edit-match/:matchId", async (req, res) => {
     const getDeselectedPlayers = (isHome) => {
       let deselectedPlayers = [];
       let newPlayerIds;
-  
+
       if (isHome) {
-          newPlayerIds = new Set(req.body.homeTeam.players.map((p) => p._id));
-          deselectedPlayers = existingMatch.homeTeam.players.filter(
-              (p) => !newPlayerIds.has(p._id)
-          );
+        newPlayerIds = new Set(req.body.homeTeam.players.map((p) => p._id));
+        deselectedPlayers = existingMatch.homeTeam.players.filter(
+          (p) => !newPlayerIds.has(p._id)
+        );
       } else {
-          newPlayerIds = new Set(req.body.awayTeam.players.map((p) => p._id));
-          deselectedPlayers = existingMatch.awayTeam.players.filter(
-              (p) => !newPlayerIds.has(p._id)
-          );
+        newPlayerIds = new Set(req.body.awayTeam.players.map((p) => p._id));
+        deselectedPlayers = existingMatch.awayTeam.players.filter(
+          (p) => !newPlayerIds.has(p._id)
+        );
       }
-  
+
       return deselectedPlayers;
-  };
-  
+    };
 
     const removeDeselectedPlayerRatings = async (players, matchId) => {
       return Promise.all(
@@ -289,7 +288,7 @@ router.put("/edit-match/:matchId", async (req, res) => {
     };
 
     const homeTeamDeselectedPlayers = getDeselectedPlayers(true);
-    const awayTeamDeselectedPlayers = getDeselectedPlayers(false);  
+    const awayTeamDeselectedPlayers = getDeselectedPlayers(false);
 
     await Promise.all([
       removeDeselectedPlayerRatings(homeTeamDeselectedPlayers, matchId),
@@ -597,6 +596,32 @@ router.post("/matches", async (req, res) => {
     res.status(500).json({
       message: "Failed to create match",
       error: error.message,
+    });
+  }
+});
+
+router.get("/get-all-matches", async (req, res) => {
+  try {
+    const teamId = req.query.teamId;
+
+    if (!teamId) {
+      return res.status(400).json({
+        message: "Team name not passed!",
+      });
+    }
+
+    const matches = await Match.find({
+      $or: [
+        { "homeTeam.team": teamId },
+        { "awayTeam.team": teamId }],
+    });
+
+    return res.status(200).json({
+      matches,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error!",
     });
   }
 });
