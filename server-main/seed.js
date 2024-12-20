@@ -1356,6 +1356,7 @@ const clubs = [
   "Zurich",
   "Zwolle",
 ];
+
 const generateDOB = () => {
   const start = new Date("1990-01-01");
   const end = new Date("2000-12-31");
@@ -1511,6 +1512,71 @@ const seedDatabase = async () => {
       console.log(`Country: ${player.country.country}`);
       console.log('National Teams:', player.nationalTeams);
     });
+
+     const players = await Player.find();
+     const allClubs = await Club.find();
+ 
+     const matches = [
+       {
+         type: "ClubTeam",
+         date: new Date("2023-12-15"),
+         venue: "Stadium A",
+         odds: { homeWin: 0.5, draw: 0.3, awayWin: 0.2 },
+         homeTeam: {
+           team: allClubs[1]._id,
+           score: 2,
+           players: players.slice(13, 17).map(player => ({
+             player: player._id,
+             starter: true,
+           })),
+         },
+         awayTeam: {
+           team: allClubs[0]._id,
+           score: 1,
+           players: players.slice(4, 9).map(player => ({
+             player: player._id,
+             starter: true,
+           })),
+         },
+         rating: {
+           homeTeamRating: 4.5,
+           awayTeamRating: 4.2,
+         },
+       },
+       {
+         type: "ClubTeam",
+         date: new Date("2023-11-10"),
+         venue: "National Arena",
+         odds: { homeWin: 0.4, draw: 0.4, awayWin: 0.2 },
+         homeTeam: {
+           team: allClubs[0]._id,
+           score: 3,
+           players: players.slice(0, 6).map(player => ({
+             player: player._id,
+             starter: true,
+           })),
+         },
+         awayTeam: {
+           team: allClubs[1]._id,
+           score: 3,
+           players: players.slice(16, 20).map(player => ({
+             player: player._id,
+             starter: true,
+           })),
+         },
+         rating: {
+           homeTeamRating: 4.8,
+           awayTeamRating: 4.9,
+         },
+       },
+     ];
+ 
+     const savedMatches = await Match.insertMany(matches);
+ 
+     console.log(`\nMatches seeded successfully: ${savedMatches.length}`);
+     savedMatches.forEach(match => {
+       console.log(`Match ID: ${match._id}, Venue: ${match.venue}, Date: ${match.date}`);
+     });
 
     await mongoose.connection.close();
   } catch (error) {
